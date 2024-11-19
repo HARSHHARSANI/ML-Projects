@@ -31,3 +31,4 @@ if st.button("Recommend"):
     recommendations = recommend(selected_movie_name)
     for rec in recommendations:
         st.write(rec)
+
