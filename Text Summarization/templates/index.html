@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>News App</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .content {
+            display: none; /* Hide full content by default */
+        }
+        .content-preview {
+            cursor: pointer;
+            color: blue;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">News Articles</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Link</th>
+                    <th>Content</th>
+                    <th>Action</th> <!-- New column for actions -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for article in news %}
+                <tr>
+                    <td>{{ article[1] }}</td>
+                    <td><a href="{{ article[2] }}">{{ article[2] }}</a></td>
+                    <td>
+                        <!-- Show first 100 characters -->
+                        <span class="content-preview" onclick="toggleContent(this)">
+                            {{ article[3][:100] }}...
+                        </span>
+                        <!-- Full content hidden initially -->
+                        <span class="content">{{ article[3] }}</span>
+                    </td>
+                    <td><button class="btn btn-success" onclick="summarizeContent('{{ article[3] | escape }}')">Summarize</button></td> <!-- Summarize button -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Area to display summary results -->
+        <div id="summaryResult" class="mt-4"></div>
+
+    </div>
+
+    <script>
+        function toggleContent(element) {
+            const fullContent = element.nextElementSibling; // Get the next sibling (full content)
+            if (fullContent.style.display === "none") {
+                fullContent.style.display = "inline"; // Show full content
+                element.style.display = "none"; // Hide preview
+            } else {
+                fullContent.style.display = "none"; // Hide full content
+                element.style.display = "inline"; // Show preview
+            }
+        }
+
+        function summarizeContent(content) {
+            fetch('/summarize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: content }) // Send the content as JSON
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('summaryResult').innerText = data.summary; // Display summary
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
 import json
 import os
 from selenium import webdriver
+import mysql.connector
 
 import time
 
@@ -57,6 +58,7 @@ def scrape_indian_express(driver):
                 print(f"Error processing a news item: {e}")
 
         news_list = scrape_inside_links(driver, list)
+        store_news_in_db(news_list)
 
     except Exception as e:
         print(f"Error during scrape_indian_express: {e}")
@@ -101,6 +103,7 @@ def scrape_latest_news_selenium(driver):
     driver.get("https://indianexpress.com/")
     time.sleep(5)
     news_list = []
+    list = []
 
     try:
         # Find the "Latest News" section
@@ -117,11 +120,13 @@ def scrape_latest_news_selenium(driver):
 
                 # Add the news to the list
                 if title and link:
-                    news_list.append({"title": title, "link": link})
+                    list.append({"title": title, "link": link})
 
             except Exception as e:
                 print(f"Error processing a news item: {e}")
 
+        news_list = scrape_inside_links(driver, list)
+        store_news_in_db(news_list)
     except Exception as e:
         print(f"Error during scrape_latest_news_selenium: {e}")
 
@@ -132,6 +137,7 @@ def scrape_top_news_selenium(driver):
     driver.get("https://indianexpress.com/")
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, "left-part")))
     news_list = []
+    list = []
 
     try:
         left_part = driver.find_elements(By.CLASS_NAME, "left-part")
@@ -170,21 +176,18 @@ def scrape_top_news_selenium(driver):
                 print(f"Link: {link}")
 
                 if title and link:
-                    news_list.append({"title": title, "link": link})
+                    list.append({"title": title, "link": link})
 
             except Exception as e:
                 print(f"Error processing article: {e}")
+
+        news_list = scrape_inside_links(driver, list)
+        store_news_in_db(news_list)
 
     except Exception as e:
         print(f"Error during main scraping process: {e}")
 
     return news_list
-
-
-# Example usage
-# driver = webdriver.Chrome()  # Make sure you have the appropriate driver installed
-# news_data = scrape_top_news_selenium(driver)
-# print(news_data)
 
 
 def save_news_to_file(driver, file_path="indian_express_all_news.json"):
@@ -197,8 +200,8 @@ def save_news_to_file(driver, file_path="indian_express_all_news.json"):
 
     # Step 2: Scrape the news from all sections using the same driver instance
     all_news.extend(scrape_indian_express(driver))
-    # all_news.extend(scrape_latest_news_selenium(driver))
-    # all_news.extend(scrape_top_news_selenium(driver))
+    all_news.extend(scrape_latest_news_selenium(driver))
+    all_news.extend(scrape_top_news_selenium(driver))
 
     # Step 3: Remove duplicates based on link
     seen_links = set()
@@ -213,6 +216,37 @@ def save_news_to_file(driver, file_path="indian_express_all_news.json"):
         json.dump(unique_news, file, ensure_ascii=False, indent=4)
 
     print(f"Scraped and saved {len(unique_news)} articles to '{file_path}'.")
+
+
+def store_news_in_db(news_list):
+    # Connect to MySQL database
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="12345678",
+        database="news_db"
+    )
+
+    cursor = mydb.cursor()
+
+    for news_item in news_list:
+        title = news_item['title']
+        link = news_item['link']
+        content = news_item['content']
+
+        # Insert into the database
+        try:
+            cursor.execute("INSERT INTO news (title, link, content) VALUES (%s, %s, %s)",
+                           (title, link, content))
+            mydb.commit()  # Commit the transaction
+            print(f"Inserted: {title}")
+        except mysql.connector.Error as err:
+            print(f"Error inserting data: {err}")
+
+    cursor.close()
+    mydb.close()
+
+    return news_list  # Return the list of news items processed
 
 
 def main():
