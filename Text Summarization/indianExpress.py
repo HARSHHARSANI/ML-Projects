@@ -1,23 +1,23 @@
+import json
+import os
 from selenium import webdriver
-from selenium.webdriver.common.by import By
+
 import time
-from selenium import webdriver
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import json
-import json
-import os
 
 
 def scrape_indian_express(driver):
     driver.get("https://indianexpress.com/")
     time.sleep(5)
+    list = []
     news_list = []
 
     try:
         # Find the right-part news section
-        right_part = driver.find_element(By.CLASS_NAME, "right-part")
+        right_part = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "right-part")))
         top_news = right_part.find_element(By.CLASS_NAME, "top-news")
         top_news_ul = top_news.find_element(By.TAG_NAME, "ul")
         top_news_ul_li = top_news_ul.find_elements(By.TAG_NAME, "li")
@@ -28,17 +28,73 @@ def scrape_indian_express(driver):
                 title = headline.text.strip()
                 link = headline.get_attribute("href")
 
-                # Add the news to the list
-                if title and link:
-                    news_list.append({"title": title, "link": link})
+                print(title)
+                print(link)
 
+                # Open the link in the browser
+                if title and link:
+                    try:
+                        # print(f"Opening link: {link}")  # Optional: log the link being opened
+                        #
+                        # driver.get(link)  # Open the news link
+                        # time.sleep(5)
+                        #
+                        # heading_inside = WebDriverWait(driver, 10).until(
+                        #     EC.presence_of_element_located((By.TAG_NAME, "h1")))
+                        # print(heading_inside.text)
+                        #
+                        # mini_heading_inside = driver.find_elements(By.TAG_NAME, "h2")[0]
+                        # print(mini_heading_inside.text)
+                        #
+                        # content = driver.find_elements(By.ID, "pcl-full-content")[0]
+                        # # print(content.text)
+                        # final_content = content.text
+                        # # print(final_content)
+                        list.append({"title": title, "link": link})
+                    except Exception as e:
+                        print(f"inside  if title and link: {e}")
             except Exception as e:
                 print(f"Error processing a news item: {e}")
+
+        news_list = scrape_inside_links(driver, list)
 
     except Exception as e:
         print(f"Error during scrape_indian_express: {e}")
 
     return news_list
+
+
+def scrape_inside_links(driver, n_list):
+    new_list = []
+
+    for i in n_list:
+        try:
+
+            driver.get(i["link"])
+            time.sleep(5)
+            print(f"Opening link: {i["link"]}")  # Optional: log the link being opened
+
+            driver.get(i["link"])  # Open the news link
+            time.sleep(5)
+
+            heading_inside = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, "h1")))
+            print(heading_inside.text)
+
+            mini_heading_inside = driver.find_elements(By.TAG_NAME, "h2")[0]
+            print(mini_heading_inside.text)
+
+            content = driver.find_elements(By.ID, "pcl-full-content")[0]
+            # print(content.text)
+            final_content = content.text
+            # print(final_content)
+
+            new_list.append({"title": i["title"], "link": i["link"], "content": final_content})
+
+        except Exception as e:
+            print(f"inside try catch scrape_inside_links , {e}")
+
+    return new_list
 
 
 def scrape_latest_news_selenium(driver):
@@ -70,21 +126,6 @@ def scrape_latest_news_selenium(driver):
         print(f"Error during scrape_latest_news_selenium: {e}")
 
     return news_list
-
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-import time
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-import time
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
 
 
 def scrape_top_news_selenium(driver):
@@ -156,8 +197,8 @@ def save_news_to_file(driver, file_path="indian_express_all_news.json"):
 
     # Step 2: Scrape the news from all sections using the same driver instance
     all_news.extend(scrape_indian_express(driver))
-    all_news.extend(scrape_latest_news_selenium(driver))
-    all_news.extend(scrape_top_news_selenium(driver))
+    # all_news.extend(scrape_latest_news_selenium(driver))
+    # all_news.extend(scrape_top_news_selenium(driver))
 
     # Step 3: Remove duplicates based on link
     seen_links = set()
