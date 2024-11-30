@@ -16,70 +16,82 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="mt-5">News Articles</h1>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Link</th>
-                    <th>Content</th>
-                    <th>Action</th> <!-- New column for actions -->
-                </tr>
-            </thead>
-            <tbody>
-                {% for article in news %}
-                <tr>
-                    <td>{{ article[1] }}</td>
-                    <td><a href="{{ article[2] }}">{{ article[2] }}</a></td>
-                    <td>
-                        <!-- Show first 100 characters -->
-                        <span class="content-preview" onclick="toggleContent(this)">
-                            {{ article[3][:100] }}...
-                        </span>
-                        <!-- Full content hidden initially -->
-                        <span class="content">{{ article[3] }}</span>
-                    </td>
-                    <td><button class="btn btn-success" onclick="summarizeContent('{{ article[3] | escape }}')">Summarize</button></td> <!-- Summarize button -->
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="container">
+    <h1 class="mt-5">News Articles</h1>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>Link</th>
+            <th>Content</th>
+            <th>Action</th> <!-- New column for actions -->
+        </tr>
+        </thead>
+        <tbody>
+        {% for article in news %}
+        <tr>
+            <td>{{ article[1] }}</td>
+            <td><a href="{{ article[2] }}">{{ article[2] }}</a></td>
+            <td>
+                <span class="content-preview" onclick="toggleContent(this)">
+                    {{ article[3][:100] }}...
+                </span>
+                <span class="content">{{ article[3] }}</span>
+            </td>
+            <td>
+                <!-- Add data-content to the button -->
+                <button class="btn btn-success"
+                        data-content="{{ article[3] | escape }}"
+                        onclick="summarizeContent(this)">
+                    Summarize
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
-        <!-- Area to display summary results -->
-        <div id="summaryResult" class="mt-4"></div>
+    <!-- Area to display summary results -->
+    <div id="summaryResult" class="mt-4"></div>
+</div>
 
-    </div>
-
-    <script>
-        function toggleContent(element) {
-            const fullContent = element.nextElementSibling; // Get the next sibling (full content)
-            if (fullContent.style.display === "none") {
-                fullContent.style.display = "inline"; // Show full content
-                element.style.display = "none"; // Hide preview
-            } else {
-                fullContent.style.display = "none"; // Hide full content
-                element.style.display = "inline"; // Show preview
-            }
+<script>
+    // Function to toggle between preview and full content
+    function toggleContent(element) {
+        const fullContent = element.nextElementSibling; // Get the next sibling (full content)
+        if (fullContent.style.display === "none") {
+            fullContent.style.display = "inline"; // Show full content
+            element.style.display = "none"; // Hide preview
+        } else {
+            fullContent.style.display = "none"; // Hide full content
+            element.style.display = "inline"; // Show preview
         }
+    }
 
-        function summarizeContent(content) {
-            fetch('/summarize', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ text: content }) // Send the content as JSON
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('summaryResult').innerText = data.summary; // Display summary
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+    // Function to handle summarization
+    function summarizeContent(button) {
+    const content = button.getAttribute('data-content'); // Get the content to summarize
+    fetch('/summarize', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: content }) // Send the content as JSON
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.redirect_url) {
+            window.location.href = data.redirect_url; // Redirect to the summary page
+        } else {
+            console.error('Failed to redirect:', data);
         }
-    </script>
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+</script>
 
 </body>
 </html>

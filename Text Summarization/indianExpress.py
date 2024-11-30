@@ -58,7 +58,6 @@ def scrape_indian_express(driver):
                 print(f"Error processing a news item: {e}")
 
         news_list = scrape_inside_links(driver, list)
-        store_news_in_db(news_list)
 
     except Exception as e:
         print(f"Error during scrape_indian_express: {e}")
@@ -126,7 +125,7 @@ def scrape_latest_news_selenium(driver):
                 print(f"Error processing a news item: {e}")
 
         news_list = scrape_inside_links(driver, list)
-        store_news_in_db(news_list)
+
     except Exception as e:
         print(f"Error during scrape_latest_news_selenium: {e}")
 
@@ -182,7 +181,6 @@ def scrape_top_news_selenium(driver):
                 print(f"Error processing article: {e}")
 
         news_list = scrape_inside_links(driver, list)
-        store_news_in_db(news_list)
 
     except Exception as e:
         print(f"Error during main scraping process: {e}")
@@ -214,7 +212,7 @@ def save_news_to_file(driver, file_path="indian_express_all_news.json"):
     # Step 4: Save the combined news to the file
     with open(file_path, "w", encoding="utf-8") as file:
         json.dump(unique_news, file, ensure_ascii=False, indent=4)
-
+    store_news_in_db(unique_news)
     print(f"Scraped and saved {len(unique_news)} articles to '{file_path}'.")
 
 
