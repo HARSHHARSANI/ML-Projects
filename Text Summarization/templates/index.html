@@ -101,13 +101,13 @@
             <td><a href="{{ article[2] }}" target="_blank" class="text-primary">{{ article[2] }}</a></td>
             <td>
                 <span class="content-preview" onclick="toggleContent(this)">
-                    {{ article[3][:100] }}...
+                    {{ article['content'][:100] }}...
                 </span>
                 <span class="content">{{ article[3] }}</span>
             </td>
             <td>
                 <button class="btn btn-success"
-                        data-content="{{ article[3] | escape }}"
+                        data-content="{{ article['content'] | escape }}"
                         onclick="summarizeContent(this)">
                     Summarize
                 </button>
@@ -147,32 +147,41 @@
     }
 
     // Function to handle summarization
-    function summarizeContent(button) {
-        const content = button.getAttribute('data-content'); // Get the content to summarize
-        fetch('/summarize', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: content }) // Send the content as JSON
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.redirect_url) {
-                window.location.href = data.redirect_url; // Redirect to the summary page
-            } else if (data.summary) {
-                // Display the summary directly on the page
-                document.getElementById('summaryResult').style.display = 'block';
-                document.getElementById('summaryText').innerText = data.summary;
-            } else {
-                document.getElementById('errorAlert').style.display = 'block';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('errorAlert').style.display = 'block';
-        });
+function summarizeContent(button) {
+    const content = button.getAttribute('data-content'); // Get the content to summarize
+    console.log('Content to summarize:', content); // Log content to verify if it's being fetched
+
+    // Check if the content is available
+    if (!content || content.trim() === "") {
+        alert('Content is empty or invalid!');
+        return;
     }
+
+    fetch('/summarize', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: content }) // Send the content as JSON
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.redirect_url) {
+            window.location.href = data.redirect_url; // Redirect to the summary page
+        } else if (data.summary) {
+            // Display the summary directly on the page
+            document.getElementById('summaryResult').style.display = 'block';
+            document.getElementById('summaryText').innerText = data.summary;
+        } else {
+            document.getElementById('errorAlert').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('errorAlert').style.display = 'block';
+    });
+}
+
 </script>
 
 </body>

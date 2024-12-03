@@ -81,6 +81,17 @@
             <p class="card-text">{{ summary }}</p>
         </div>
     </div>
+    <div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Sentiment Analysis</h5>
+        {% if plot %}
+            <img src="data:image/png;base64,{{ plot }}" class="img-fluid" alt="Sentiment Analysis Plot">
+        {% else %}
+            <p>No sentiment analysis available.</p>
+        {% endif %}
+    </div>
+</div>
+
 
     <a href="/" class="btn btn-primary">Back to Home</a>
 </div>
