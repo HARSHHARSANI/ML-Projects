@@ -1,14 +1,14 @@
+import pandas as pd
+import matplotlib
+import base64
+from io import BytesIO
+import os
 from flask import Flask, render_template, request, jsonify, url_for
 import mysql.connector
 from transformers import pipeline
 import torch
-import matplotlib
-import base64
-from io import BytesIO
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
 
 # Configure Matplotlib for non-GUI environments
 matplotlib.use('Agg')
@@ -48,12 +48,14 @@ sentiment_analyzer = pipeline("zero-shot-classification", model="facebook/bart-l
 SENTIMENT_LIST = ["positive", "negative", "neutral", "joy", "sadness", "anger", "fear", "trust"]
 
 
-# Function to generate sentiment analysis plot
-def generate_sentiment_plot(text):
+# Function to generate sentiment analysis plot and save to CSV
+def generate_sentiment_plot_and_save_to_csv(text, summary):
     try:
+        # Perform sentiment analysis
         analysis_output = sentiment_analyzer(text, candidate_labels=SENTIMENT_LIST, multi_label=True)
         sentiments = {emotion: score for emotion, score in zip(analysis_output['labels'], analysis_output['scores'])}
 
+        # Generate the sentiment plot
         df_sentiments = pd.DataFrame(sentiments.items(), columns=['Emotion', 'Score'])
 
         plt.figure(figsize=(10, 6))
@@ -71,9 +73,32 @@ def generate_sentiment_plot(text):
         plt.savefig(buf, format='png')
         buf.seek(0)
         plt.close()
-        return base64.b64encode(buf.getvalue()).decode('ascii')
+        plot_base64 = base64.b64encode(buf.getvalue()).decode('ascii')
+
+        # Prepare data for CSV
+        sentiment_data = {
+            "Text Summary": summary,
+            "Positive Score": sentiments.get("positive", 0),
+            "Negative Score": sentiments.get("negative", 0),
+            "Neutral Score": sentiments.get("neutral", 0),
+            "Joy Score": sentiments.get("joy", 0),
+            "Sadness Score": sentiments.get("sadness", 0),
+            "Anger Score": sentiments.get("anger", 0),
+            "Fear Score": sentiments.get("fear", 0),
+            "Trust Score": sentiments.get("trust", 0),
+            "Other Emotions": str(sentiments)  # Saving all emotions as a string
+        }
+
+        # Save to CSV
+        sentiment_df = pd.DataFrame([sentiment_data])
+
+        # If the CSV file doesn't exist, create it with header
+        file_exists = os.path.exists("sentiment_results.csv")
+        sentiment_df.to_csv("sentiment_results.csv", mode='a', header=not file_exists, index=False)
+
+        return plot_base64
     except Exception as e:
-        print(f"Error generating sentiment plot: {e}")
+        print(f"Error generating sentiment plot and saving to CSV: {e}")
         return None
 
 
@@ -139,8 +164,8 @@ def summarize():
     finally:
         cursor.close()
 
-    # Generate sentiment plot
-    plot_data = generate_sentiment_plot(summarized_text)
+    # Generate sentiment plot and save to CSV
+    plot_data = generate_sentiment_plot_and_save_to_csv(summarized_text, summarized_text)
 
     # Render summary page
     return jsonify({
@@ -163,7 +188,7 @@ def show_summary(summary_id):
         if not result:
             return "Summary not found.", 404
 
-        plot_data = generate_sentiment_plot(result['summary'])
+        plot_data = generate_sentiment_plot_and_save_to_csv(result['summary'], result['summary'])
         return render_template('summary.html', full_text=result['full_text'], summary=result['summary'], plot=plot_data)
     except mysql.connector.Error as e:
         print(f"Error fetching summary: {e}")
