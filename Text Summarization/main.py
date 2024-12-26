@@ -110,7 +110,7 @@ def index():
 
     try:
         cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT id, title, content FROM news ORDER BY id DESC LIMIT 10")
+        cursor.execute("SELECT id, title, content FROM news ORDER BY id DESC LIMIT 25")
         results = cursor.fetchall()
         return render_template('index.html', news=results)
     except mysql.connector.Error as e:
@@ -127,6 +127,11 @@ def summarize():
     text_to_summarize = data.get('text', '').strip()
     if not text_to_summarize:
         return jsonify({'error': 'No text provided to summarize.'}), 400
+
+    # Count words and truncate if necessary
+    word_count = len(text_to_summarize.split())
+    if word_count > 300:
+        text_to_summarize = ' '.join(text_to_summarize.split()[:300])  # Keep only the first 300 words
 
     # Save full content to database
     connection = get_db_connection()
@@ -146,7 +151,7 @@ def summarize():
 
     # Generate summary
     try:
-        summarized_text = summarizer(text_to_summarize, max_length=100, min_length=25, do_sample=False)[0][
+        summarized_text = summarizer(text_to_summarize, max_length=200, min_length=25, do_sample=False)[0][
             'summary_text']
     except Exception as e:
         print(f"Summarization error: {e}")
