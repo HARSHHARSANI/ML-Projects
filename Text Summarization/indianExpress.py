@@ -18,14 +18,16 @@ def scrape_indian_express(driver):
 
     try:
         # Find the right-part news section
-        right_part = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "right-part")))
+        right_part = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "right-part")))
         top_news = right_part.find_element(By.CLASS_NAME, "top-news")
         top_news_ul = top_news.find_element(By.TAG_NAME, "ul")
         top_news_ul_li = top_news_ul.find_elements(By.TAG_NAME, "li")
 
         for li in top_news_ul_li:
             try:
-                headline = li.find_element(By.TAG_NAME, "h3").find_element(By.TAG_NAME, "a")
+                headline = li.find_element(
+                    By.TAG_NAME, "h3").find_element(By.TAG_NAME, "a")
                 title = headline.text.strip()
                 link = headline.get_attribute("href")
 
@@ -35,22 +37,6 @@ def scrape_indian_express(driver):
                 # Open the link in the browser
                 if title and link:
                     try:
-                        # print(f"Opening link: {link}")  # Optional: log the link being opened
-                        #
-                        # driver.get(link)  # Open the news link
-                        # time.sleep(5)
-                        #
-                        # heading_inside = WebDriverWait(driver, 10).until(
-                        #     EC.presence_of_element_located((By.TAG_NAME, "h1")))
-                        # print(heading_inside.text)
-                        #
-                        # mini_heading_inside = driver.find_elements(By.TAG_NAME, "h2")[0]
-                        # print(mini_heading_inside.text)
-                        #
-                        # content = driver.find_elements(By.ID, "pcl-full-content")[0]
-                        # # print(content.text)
-                        # final_content = content.text
-                        # # print(final_content)
                         list.append({"title": title, "link": link})
                     except Exception as e:
                         print(f"inside  if title and link: {e}")
@@ -73,7 +59,8 @@ def scrape_inside_links(driver, n_list):
 
             driver.get(i["link"])
             time.sleep(5)
-            print(f"Opening link: {i["link"]}")  # Optional: log the link being opened
+            # Optional: log the link being opened
+            print(f"Opening link: {i["link"]}")
 
             driver.get(i["link"])  # Open the news link
             time.sleep(5)
@@ -90,7 +77,8 @@ def scrape_inside_links(driver, n_list):
             final_content = content.text
             # print(final_content)
 
-            new_list.append({"title": i["title"], "link": i["link"], "content": final_content})
+            new_list.append(
+                {"title": i["title"], "link": i["link"], "content": final_content})
 
         except Exception as e:
             print(f"inside try catch scrape_inside_links , {e}")
@@ -113,7 +101,8 @@ def scrape_latest_news_selenium(driver):
 
         for li in top_news_ul_li:
             try:
-                headline = li.find_element(By.TAG_NAME, "h3").find_element(By.TAG_NAME, "a")
+                headline = li.find_element(
+                    By.TAG_NAME, "h3").find_element(By.TAG_NAME, "a")
                 title = headline.text.strip()
                 link = headline.get_attribute("href")
 
@@ -134,7 +123,8 @@ def scrape_latest_news_selenium(driver):
 
 def scrape_top_news_selenium(driver):
     driver.get("https://indianexpress.com/")
-    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, "left-part")))
+    WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "left-part")))
     news_list = []
     list = []
 
@@ -151,19 +141,22 @@ def scrape_top_news_selenium(driver):
 
         for article in left_part_divs:
             try:
-                second_div_inside_div = article.find_elements(By.TAG_NAME, "div")
+                second_div_inside_div = article.find_elements(
+                    By.TAG_NAME, "div")
                 if len(second_div_inside_div) < 2:
                     print("Not enough inner divs found in this article.")
                     continue
 
                 # Check if the second inner div contains h3 tags
-                second_div_inside_div_h3 = second_div_inside_div[1].find_elements(By.TAG_NAME, "h3")
+                second_div_inside_div_h3 = second_div_inside_div[1].find_elements(
+                    By.TAG_NAME, "h3")
                 if not second_div_inside_div_h3:
                     print("No h3 tags found in this inner div.")
                     continue
 
                 # Check if there are anchor tags within h3
-                link_element = second_div_inside_div_h3[0].find_elements(By.TAG_NAME, "a")
+                link_element = second_div_inside_div_h3[0].find_elements(
+                    By.TAG_NAME, "a")
                 if not link_element:
                     print("No anchor tags found in h3.")
                     continue
@@ -244,18 +237,15 @@ def store_news_in_db(news_list):
     cursor.close()
     mydb.close()
 
-    return news_list  # Return the list of news items processed
+    return news_list
 
 
 def main():
-    # Step 1: Open the driver once
     driver = webdriver.Firefox()
 
     try:
-        # Step 2: Call the save_news_to_file function which will perform all scraping
         save_news_to_file(driver)
     finally:
-        # Step 3: Close the driver at the end
         driver.quit()
 
 

@@ -1,17 +1,17 @@
+from mysql.connector import Error
+import mysql.connector
+import torch
+from transformers import pipeline
+from flask import Flask, render_template, Response
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from io import BytesIO
+import base64
 import matplotlib
 
 matplotlib.use('Agg')
-import base64
-from io import BytesIO
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from flask import Flask, render_template, Response
-from transformers import pipeline
-import torch
-import mysql.connector  # Import mysql.connector
-from mysql.connector import Error  # For error handling
 
 app = Flask(__name__)
 
@@ -45,7 +45,8 @@ def load_model(device):
 
 
 news_sentiment_analysis = load_model(device)
-sentiment_list = ["positive", "negative", "neutral", "joy", "sadness", "anger", "fear", "trust"]
+sentiment_list = ["positive", "negative", "neutral",
+                  "joy", "sadness", "anger", "fear", "trust"]
 
 
 def generate_plot(article_str):
@@ -58,9 +59,11 @@ def generate_plot(article_str):
         )
 
         print("Reached here 1")
-        sentiments = {emotion: score for emotion, score in zip(analysis_output['labels'], analysis_output['scores'])}
+        sentiments = {emotion: score for emotion, score in zip(
+            analysis_output['labels'], analysis_output['scores'])}
 
-        df_sentiments = pd.DataFrame(sentiments.items(), columns=['Emotion', 'Score'])
+        df_sentiments = pd.DataFrame(
+            sentiments.items(), columns=['Emotion', 'Score'])
 
         plt.figure(figsize=(10, 6))
         sns.set_theme(style="whitegrid")
@@ -77,7 +80,8 @@ def generate_plot(article_str):
         print("Reached here 3")
 
         for index, row in df_sentiments.iterrows():
-            plt.text(index, row['Score'], round(row['Score'], 2), color='black', ha="center")
+            plt.text(index, row['Score'], round(
+                row['Score'], 2), color='black', ha="center")
 
         plt.xticks(rotation=45)
         sns.despine()
@@ -104,7 +108,8 @@ def index():
 
     try:
         cursor = connection.cursor(dictionary=True)
-        query = "SELECT id, title, content FROM news ORDER BY id DESC LIMIT 1"  # Fetch last 10 articles
+        # Fetch last 10 articles
+        query = "SELECT id, title, content FROM news ORDER BY id DESC LIMIT 1"
         cursor.execute(query)
         results = cursor.fetchall()
 
